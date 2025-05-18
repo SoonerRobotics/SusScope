@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 
 use native_dialog::{DialogBuilder};
+use tauri::ipc::Response;
 use tauri::{Builder, Manager, State};
 
 struct AppState {
@@ -38,6 +39,24 @@ fn get_log_file(state: State<'_, Mutex<AppState>>) -> String {
     return state.log_file.clone();
 }
 
+#[tauri::command]
+fn read_log_file(state: State<'_, Mutex<AppState>>) -> Response {
+    let state = state.lock().unwrap();
+    let log_file = &state.log_file;
+
+    if log_file.is_empty() {
+        return tauri::ipc::Response::new("".to_string());
+    }
+
+    let data = std::fs::read_to_string(log_file);
+    if data.is_err() {
+        return tauri::ipc::Response::new("".to_string());
+    }
+
+    let data = data.unwrap();
+    tauri::ipc::Response::new(data)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     Builder::default()
@@ -47,7 +66,8 @@ pub fn run() {
         }))
         .invoke_handler(tauri::generate_handler![
             select_log_file,
-            get_log_file
+            get_log_file,
+            read_log_file
         ])
         .run(tauri::generate_context!())
         .expect("An error occured while running SusScope.");
