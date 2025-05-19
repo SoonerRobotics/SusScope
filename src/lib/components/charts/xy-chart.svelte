@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { onMount, onDestroy } from "svelte";
     import { Chart, type ChartConfiguration, registerables } from "chart.js";
+    import { onDestroy, onMount } from "svelte";
 
     Chart.register(...registerables);
 
@@ -8,8 +8,6 @@
 
     let canvas: HTMLCanvasElement;
     let chart: Chart;
-
-    console.log(data);
 
     onMount(() => {
         const config: ChartConfiguration = {
@@ -26,7 +24,8 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
+                animation: false,
                 scales: {
                     x: {
                         type: 'linear',
