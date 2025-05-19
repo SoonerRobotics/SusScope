@@ -178,8 +178,38 @@
                         {#if current_page === "dashboard"}
                             <div class="flex flex-col">
                                 <div class="flex flex-row">
+                                    <div class="flex flex-col">
+                                        <!-- play, stop, restart -->
+                                        <button
+                                            class="bg-gray-700 text-white p-2 mb-2 rounded-md text-sm cursor-pointer hover:opacity-90"
+                                            onclick={() => {
+                                                current_time = 0;
+                                                current_state = 0;
+                                            }}
+                                        >
+                                            Restart
+                                        </button>
+                                        <button
+                                            class="bg-gray-700 text-white p-2 mb-2 rounded-md text-sm cursor-pointer hover:opacity-90"
+                                            onclick={() => {
+                                                current_state = 1;
+                                            }}
+                                        >
+                                            Play
+                                        </button>
+                                        <button
+                                            class="bg-gray-700 text-white p-2 mb-2 rounded-md text-sm cursor-pointer hover:opacity-90"
+                                            onclick={() => {
+                                                current_state = 0;
+                                            }}
+                                        >
+                                            Pause
+                                        </button>
+                                    </div>
+
+                                    <!-- <p>{`${events[events.length - 1]}`}</p> -->
                                     <Timeline
-                                        maxTime={200}
+                                        maxTime={300}
                                         currentTime={current_time}
                                         onScrub={(time: number) => {
                                             current_time = time;

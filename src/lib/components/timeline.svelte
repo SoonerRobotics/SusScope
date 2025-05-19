@@ -15,6 +15,16 @@
     onScrub(newTime);
   }
 
+  function handleMove(event: MouseEvent) {
+    if (event.buttons !== 1) return;
+
+    const rect = timelineEl.getBoundingClientRect();
+    const moveX = event.clientX - rect.left;
+    const percent = moveX / rect.width;
+    const newTime = Math.max(0, Math.min(maxTime, percent * maxTime));
+    currentTime = newTime;
+  }
+
   function formatTime(seconds: number) {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -27,9 +37,11 @@
   );
 </script>
 
-<button
+<div class="mx-8 w-full">
+  <button
   bind:this={timelineEl}
   onclick={handleClick}
+  onmousemove={handleMove}
   class="w-full h-12 relative mt-8 bg-gray-300 rounded-md cursor-pointer"
 >
   <!-- Interval Time Markers -->
@@ -76,3 +88,5 @@
     </div>
   </div>
 </button>
+
+</div>
