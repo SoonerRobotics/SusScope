@@ -2,7 +2,7 @@
   export let maxTime: number = 300; // Total duration in seconds
   export let currentTime: number = 0;
   export let markers: { time: number; label?: string }[] = [];
-  export let interval: number = 15; // Interval for time markers in seconds
+  export let interval: number = 10000; // Interval for time markers in milliseconds
   export let onScrub: (time: number) => void = () => {};
 
   let timelineEl: HTMLButtonElement;
@@ -25,7 +25,8 @@
     currentTime = newTime;
   }
 
-  function formatTime(seconds: number) {
+  function formatTime(ms: number) {
+    const seconds = Math.floor(ms / 1000);
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -37,7 +38,7 @@
   );
 </script>
 
-<div class="mx-8 w-full">
+<div class="px-8 w-full">
   <button
   bind:this={timelineEl}
   onclick={handleClick}
@@ -47,11 +48,11 @@
   <!-- Interval Time Markers -->
   {#each intervalMarkers as time}
     <div
-      class="absolute top-0 h-full w-0.5 bg-gray-500"
+      class="absolute top-0 h-full w-0.5 bg-gray-600"
       style="left: {(time / maxTime) * 100}%"
     >
       <div
-        class="absolute -top-5 left-1/2 -translate-x-1/2 text-xs text-gray-700"
+        class="absolute -top-5 left-1/2 -translate-x-1/2 text-xs text-white"
       >
         {formatTime(time)}
       </div>
