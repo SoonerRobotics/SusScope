@@ -4,7 +4,9 @@
 
     Chart.register(...registerables);
 
-    export let data: { x: number; y: number }[];
+    const { data }: {
+        data: { x: number; y: number }[];
+    } = $props();
 
     let canvas: HTMLCanvasElement;
     let chart: Chart;
@@ -30,15 +32,21 @@
                     x: {
                         type: 'linear',
                         position: 'bottom',
+                        min: -50,
+                        max: 50,
                         title: {
                             display: true,
-                            text: 'X'
+                            text: 'X (meters)'
                         }
                     },
                     y: {
+                        type: 'linear',
+                        position: 'left',
+                        min: -50,
+                        max: 50,
                         title: {
                             display: true,
-                            text: 'Y'
+                            text: 'Y (meters)'
                         }
                     }
                 }
@@ -51,6 +59,13 @@
     onDestroy(() => {
         chart?.destroy();
     });
+
+    $effect(() => {
+        if (chart) {
+            chart.data.datasets[0].data = data;
+            chart.update();
+        }
+    })
 </script>
 
 <canvas bind:this={canvas} class="w-full h-full"></canvas>

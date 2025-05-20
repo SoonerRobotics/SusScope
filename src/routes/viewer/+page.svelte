@@ -41,6 +41,7 @@
     let show_gps_position_view = $state(true);
     let position_view = $state(1);
     let position_map_data = $state<any[]>([]);
+    let position_data = $state<any[]>([]);
     let current_page = $state("dashboard");
     let topic_search = $state("");
 
@@ -67,6 +68,7 @@
             //
         }
         position_map_data = get_position_map_data();
+        position_data = get_position_data();
     });
 
     // Functions
@@ -89,10 +91,6 @@
         });
     }
 
-    function get_metadata_event() {
-        return events.find((event) => event.type === "metadata") ?? null;
-    }
-
     function get_unique_types() {
         const unique_types = new Set();
         events.forEach((event) => {
@@ -106,7 +104,9 @@
     }
 
     function get_position_data() {
-        return sorted_event_map.position.map((event: any) => ({
+        return apply_time_filter(sorted_event_map.position ?? [])
+            .filter((item: any, index: number) => index % 10 == 0,)
+            .map((event: any) => ({
             x: event.event.x,
             y: event.event.y,
         }));
@@ -126,7 +126,7 @@
 
     function get_position_map_data() {
         return apply_time_filter(sorted_event_map.position ?? [])
-            .filter((item: any, index: number) => index % 100 == 0)
+            .filter((item: any, index: number) => index % 100 == 0 || index == 0 || index == sorted_event_map.position.length - 1)
             .map((event: any) => ({
                 latitude: event.event.latitude,
                 longitude: event.event.longitude,
@@ -135,7 +135,6 @@
     }
 
     function get_gps_data() {
-        console.log(sorted_event_map.gps);
         return apply_time_filter(sorted_event_map.gps ?? []).map(
             (event: any) => ({
                 latitude: event.event.latitude,
