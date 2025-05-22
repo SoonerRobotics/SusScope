@@ -14,6 +14,9 @@
     import { invoke } from "@tauri-apps/api/core";
     import { onMount } from "svelte";
 
+    // Tauri stuff
+    import { convertFileSrc } from '@tauri-apps/api/core';
+
     type EventType = {
         timestamp: number;
     } & (
@@ -38,6 +41,7 @@
 
     let events: EventType[] = $state([]);
     let sorted_event_map = $state<any>({});
+    let video_map = $state<any>({});
     let show_gps_position_view = $state(true);
     let position_view = $state(1);
     let position_map_data = $state<any[]>([]);
@@ -63,7 +67,6 @@
     });
 
     $effect(() => {
-        console.log("current_time", current_time);
         if (current_time > 0) {
             //
         }
@@ -89,6 +92,9 @@
             }
             sorted_event_map[event.type].push(event);
         });
+
+        // read videos
+        await get_video_data();
     }
 
     function get_unique_types() {
@@ -143,6 +149,23 @@
         );
     }
 
+    async function get_video_data() {
+        // get the metadata events
+        const metadata = sorted_event_map.metadata?.[0] ?? null;
+        if (!metadata) return null;
+    
+        
+        // use the "read_video" function to get the video data
+        for (const video of metadata.event.videos) {
+            const video_name = video;
+            const video_path = await invoke("read_video", { video: video_name });
+            if (video_path) {
+                console.log(`Video path for ${video_name}: ${video_path}`);
+                video_map[video_name] = video_path;
+            }
+        }
+    }
+
     onMount(() => {
         read_file();
 
@@ -155,6 +178,18 @@
                     time - last_time,
                     max_time - current_time,
                 );
+
+                if (current_time >= max_time) {
+                    current_time = max_time;
+                    current_state = 0;
+
+                    // pause all video elements
+                    const videoElements = document.querySelectorAll("video");
+                    videoElements.forEach((videoElement) => {
+                        videoElement.pause();
+                    });
+                }
+
                 last_time = time;
             }
         });
@@ -166,12 +201,18 @@
         <Splitpanes class="flex flex-row w-full h-full">
             <Pane minSize={2} size={15}>
                 <div class="flex flex-col items-center p-2 bg-gray-600 h-full">
-                    <input
-                        type="text"
-                        bind:value={topic_search}
-                        placeholder="Search"
-                        class="border border-white rounded-md p-2 mb-4 text-white outline-none"
-                    />
+                    <div class="min-h-32 flex flex-col gap-4 items-center justify-center">
+                        <a href="/" class="flex flex-row items-center gap-2">
+                            <img src="/SusScopeIcon.png" alt="logo" class="h-10 w-10" />
+                            <h1 class="text-2xl text-white">SusScope</h1>
+                        </a>
+                        <input
+                            type="text"
+                            bind:value={topic_search}
+                            placeholder="Search"
+                            class="border border-white rounded-md p-2 mb-4 text-white outline-none"
+                        />
+                    </div>
 
                     <div class="h-2 bg-white w-full mb-4"></div>
 
@@ -204,7 +245,7 @@
             <Pane minSize={80}>
                 <div class="flex-1 flex flex-col h-full">
                     <nav
-                        class="w-full bg-gray-600 text-white p-2 items-center flex flex-row"
+                        class="w-full min-h-32 bg-gray-600 text-white p-2 items-center flex flex-row"
                     >
                         <div class="flex flex-col w-full items-center">
                             <Timeline
@@ -212,6 +253,12 @@
                                 currentTime={current_time}
                                 onScrub={(time: number) => {
                                     current_time = time;
+
+                                    // adjust all video elements accordingly
+                                    const videoElements = document.querySelectorAll("video");
+                                    videoElements.forEach((videoElement) => {
+                                        videoElement.currentTime = time / 1000;
+                                    });
                                 }}
                             />
 
@@ -222,6 +269,16 @@
                                     onclick={() => {
                                         last_time = performance.now();
                                         current_state = current_state === 1 ? 0 : 1;
+
+                                        // adjust all video elements accordingly
+                                        const videoElements = document.querySelectorAll("video");
+                                        videoElements.forEach((videoElement) => {
+                                            if (current_state === 1) {
+                                                videoElement.play();
+                                            } else {
+                                                videoElement.pause();
+                                            }
+                                        });
                                     }}
                                 >
                                     {#if current_state === 1}
@@ -238,6 +295,13 @@
                                         current_time = 0;
                                         current_state = 0;
                                         last_time = performance.now();
+
+                                        // adjust all video elements accordingly
+                                        const videoElements = document.querySelectorAll("video");
+                                        videoElements.forEach((videoElement) => {
+                                            videoElement.currentTime = 0;
+                                            videoElement.pause();
+                                        });
                                     }}
                                 >
                                     <MdiRestart />
@@ -248,7 +312,13 @@
 
                     <div class="p-2 w-full h-full">
                         {#if current_page === "dashboard"}
-                            <div class="flex flex-col"></div>
+                            <div class="flex flex-col">
+                                {#if Object.entries(video_map).length > 0}
+                                    <video id={"autonav_camera_front.avi"} width="600" src={convertFileSrc(video_map["autonav_camera_front.avi"], "mp4")} preload="auto">
+                                        <track kind="captions" />
+                                    </video>
+                                {/if}
+                            </div>
                         {:else if current_page === "position"}
                             <div class="w-full h-full flex flex-col">
                                 <div
